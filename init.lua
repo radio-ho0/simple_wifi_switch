@@ -21,26 +21,19 @@ end
 red_pin = pin.D0
 green_pin = pin.D1
 blue_pin = pin.D2
- -- my AP 
---[[
-ap_name_cfg = {}
-ap_name_cfg.ssid = "simple_switch_ap"
-ap_name_cfg.pwd="1008610086"
-wifi.ap.config(ap_name_cfg)
 
-ap_ip_cfg = {}
-ap_ip_cfg.ip="192.168.192.1"
-ap_ip_cfg.netmask="255.255.255.0"
-ap_ip_cfg.geteway="192.168.192.1"
-wifi.ap.setip(ap_ip_cfg)
+
+cfg={}
+cfg.ssid="bba"
+cfg.pwd="12345678"
+wifi.ap.config(cfg)
+
+cfg={}
+cfg.ip="192.168.1.1";
+cfg.netmask="255.255.255.0";
+cfg.gateway="192.168.1.1";
+wifi.ap.setip(cfg);
 wifi.setmode(wifi.SOFTAP)
-
-]]
-
-
-wifi.setmode(wifi.STATION)
-wifi.sta.config("johnAP", "hero08hero08")
-wifi.sta.autoconnect(1)
 
 -- Create a server
 -- and set 30s time out for a incative client 
@@ -53,12 +46,17 @@ sv:listen( 80, function(c)
 	c:on("receive", function(conn, playload)
 		print(playload)
 		if(string.find(playload, "/ha") ~= nil) then
-			w(red_pin, ON)
+			if( g.read(red_pin) == 1) then
+				w(red_pin, ON)
+			else
+				w(red_pin, OFF)
+			end
 		end
 
 		conn:send("HTTP/1.0 200 OK\n\r")
 		conn:close()
 	end)
 end)
+
 
 
