@@ -57,38 +57,60 @@ srv:listen(80,function(conn)
             end
         end
         buf = buf.."<h1>Simple WiFi Switch</h1>";
-        buf = buf.."<p>GPIO0 <a href=\"?code=O0\"><button>ON</button></a>&nbsp;<a href=\"?code=C0\"><button>OFF</button></a></p>";
-        buf = buf.."<p>GPIO1 <a href=\"?code=O1\"><button>ON</button></a>&nbsp;<a href=\"?code=C1\"><button>OFF</button></a></p>";
-        buf = buf.."<p>GPIO2 <a href=\"?code=O2\"><button>ON</button></a>&nbsp;<a href=\"?code=C2\"><button>OFF</button></a></p>";
-        buf = buf.."<p>GPIO3 <a href=\"?code=O3\"><button>ON</button></a>&nbsp;<a href=\"?code=C3\"><button>OFF</button></a></p>";
-        buf = buf.."<p>GPIO4 <a href=\"?code=O4\"><button>ON</button></a>&nbsp;<a href=\"?code=C4\"><button>OFF</button></a></p>";
-        buf = buf.."<p>GPIO5 <a href=\"?code=O5\"><button>ON</button></a>&nbsp;<a href=\"?code=C5\"><button>OFF</button></a></p>";
-        buf = buf.."<p>GPIO6 <a href=\"?code=O6\"><button>ON</button></a>&nbsp;<a href=\"?code=C6\"><button>OFF</button></a></p>";
-        buf = buf.."<p>GPIO7 <a href=\"?code=O7\"><button>ON</button></a>&nbsp;<a href=\"?code=C7\"><button>OFF</button></a></p>";
+
+        kit = require("kit")
+        client:send( kit.main_page_header )
+        -- buf = buf .. getPinString(pin.D0)
+        for k,v in pairs( pin ) do
+            local row =  getPinString(v)
+            client:send( row );
+        end
+
         local _on,_off = "",""
 
-	if _GET.code then
-		local data = _GET.code
-		print(_GET.code)
-		print( type(data) .." got data " .. data)
-		local cmd = string.sub(data, 1,1)
-		local pin_str  = string.sub(data, 2,-1)
-		local pin  = tonumber(pin_str)
-		if type(pin) == "number" then
-			if cmd == "C" then
-				w(pin, OFF)
-			elseif cmd == "O" then
-				w(pin, ON)
-			end
-		end
-	end
+        if _GET.code then
+            parseCode( _GET.code )
+        end
 
-        client:send(buf);
+        client:send( kit.main_page_footer)
         client:close();
         collectgarbage();
     end)
 end)
 
 function parseCode( code )
+            local data = code
+            print( data )
+            local cmd = string.sub(data, 1,1)
+            local pin_str  = string.sub(data, 2,-1)
+            local pin  = tonumber(pin_str)
+            if type(pin) == "number" then
+                if cmd == "C" then
+                    w(pin, OFF)
+                elseif cmd == "O" then
+                    w(pin, ON)
+                end
+            end
+end
 
+function getPinString( pin )
+    local status = g.read(pin)
+    local checked_str = "";
+    if status == ON then
+        checked_str = "checked"
+    end
+
+    local switch_str = [[
+        <label class="switch">
+            <input type="checkbox" disabled %s>
+            <div class="slider"></div>
+        </label>
+    ]]
+    switch_str = string.format(switch_str, checked_str)
+
+    local str = "";
+    str = str .. switch_str
+    str = str ..  "<p>GPIO%d <a href=\"?code=O%d\"><button>ON</button></a>&nbsp;<a href=\"?code=C%d\"><button>OFF</button></a></p>";
+    str = string.format(str, pin, pin, pin)
+    return str
 end
