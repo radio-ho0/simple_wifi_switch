@@ -37,26 +37,27 @@ wifi.setmode(wifi.SOFTAP)
 
 -- Create a server
 -- and set 30s time out for a incative client 
-
-sv = net.createServer(net.TCP, 30)
-
--- Server listen on 80
--- Print HTTP headers to console
-sv:listen( 80, function(c)
-	c:on("receive", function(conn, playload)
-		print(playload)
-		if(string.find(playload, "/ha") ~= nil) then
-			if( g.read(red_pin) == 1) then
-				w(red_pin, ON)
-			else
-				w(red_pin, OFF)
-			end
+sv = require("http")
+sv.createServer(80, function(req, res)
+	req.ondata = function(self, chunk)
+		-- end of this request ?
+		if not chunk then
+			res:send(nil, 200)
+			res:send_header("Connection", "close")
+			res:send_header("Content-Type", "text/html")
+			res:send("<!DOCTYPE html>")
+			res:send("<html><head><title>")
+			res:send("Simple WiFi Switch")
+			res:send("</title></head>")
+			res:send("<body>")
+			res:send("<h1>Hello ele1000</h1>")
+			res:send("</body></html>")
+			res:finish()
 		end
-
-		conn:send("HTTP/1.0 200 OK\n\r")
-		conn:close()
-	end)
+	end
+	req.onreceive = function(self, chunk)
+		if chunk then
+			print("onreceive " .. chunk )
+		end
+	end
 end)
-
-
-
